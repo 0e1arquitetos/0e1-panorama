@@ -36,6 +36,9 @@ let placementViewer = null;
 let hotspotViewer = null;
 let hotspotMarkers = null;
 
+let hotspotStageOpened = false;
+let hasTriggeredHotspotFullscreen = false;
+
 let viewerReadyPromise = null;
 
 function waitForViewerLibrary() {
@@ -66,18 +69,32 @@ function updateWorkflowVisibility() {
   selectors.floorPlanSection.style.display = hasEssentials ? 'block' : 'none';
 
   const positioned = hasEssentials && allPanoramasPositioned();
-  selectors.goHotspots.disabled = !positioned;
+  const canPreviewNavigation = hasEssentials && state.panoramas.length > 0;
+  selectors.goHotspots.disabled = !canPreviewNavigation;
   selectors.goHotspots.textContent = positioned
     ? 'Avançar para hotspots'
-    : 'Posicione todas as câmeras';
+    : 'Pré-visualizar tour 360º';
+  if (positioned) {
+    selectors.goHotspots.removeAttribute('title');
+  } else if (canPreviewNavigation) {
+    selectors.goHotspots.title = 'Abra o ambiente imersivo mesmo com panoramas pendentes.';
+  } else {
+    selectors.goHotspots.removeAttribute('title');
+  }
 
-  if (!positioned) {
+  if (!hasEssentials) {
     selectors.hotspotSection.style.display = 'none';
+    hotspotStageOpened = false;
+    hasTriggeredHotspotFullscreen = false;
+  } else if (hotspotStageOpened) {
+    selectors.hotspotSection.style.display = 'block';
   }
 }
 
 function viewerAvailable() {
-  return typeof window !== 'undefined' && window.PhotoSphereViewer;
+  if (typeof window === 'undefined') return false;
+  const PSV = window.PhotoSphereViewer;
+  return Boolean(PSV && typeof PSV.Viewer === 'function' && PSV.MarkersPlugin);
 }
 
 function focusPanorama(panoramaId, { scrollToCanvas = false } = {}) {
@@ -253,8 +270,11 @@ function resetWorkflow() {
   selectors.publishSection.style.display = 'none';
   selectors.publishReview.innerHTML = '';
   selectors.goHotspots.disabled = true;
-  selectors.goHotspots.textContent = 'Posicione todas as câmeras';
+  selectors.goHotspots.textContent = 'Pré-visualizar tour 360º';
+  selectors.goHotspots.removeAttribute('title');
   state.activePanoramaId = null;
+  hotspotStageOpened = false;
+  hasTriggeredHotspotFullscreen = false;
 }
 
 function updateHeaderProject(name = 'Studio Panorama') {
@@ -543,12 +563,20 @@ function prepareCanvas() {
   renderMarkers();
 }
 
-function prepareHotspots() {
+async function prepareHotspots({ autoFullscreen = false } = {}) {
   populatePanoramaSelects();
-  if (state.panoramas.length && allPanoramasPositioned()) {
-    const panoramaId = selectors.hotspotPanorama.value || state.panoramas[0].id;
-    selectors.hotspotPanorama.value = panoramaId;
-    renderHotspots(panoramaId);
+  if (!state.panoramas.length) return;
+
+  const panoramaId = selectors.hotspotPanorama.value || state.panoramas[0].id;
+  selectors.hotspotPanorama.value = panoramaId;
+  await renderHotspots(panoramaId);
+
+  if (autoFullscreen && hotspotViewer?.enterFullscreen) {
+    try {
+      hotspotViewer.enterFullscreen();
+    } catch (error) {
+      console.warn('Não foi possível iniciar o modo tela cheia automaticamente.', error);
+    }
   }
 }
 
@@ -571,7 +599,9 @@ function hydrateStateFromProject(project) {
   prepareCanvas();
   updateWorkflowVisibility();
   if (allPanoramasPositioned()) {
+    hotspotStageOpened = true;
     selectors.hotspotSection.style.display = 'block';
+    hasTriggeredHotspotFullscreen = true;
     prepareHotspots();
   }
   showPublishStep();
@@ -582,6 +612,7 @@ async function loadProject(projectId) {
     const response = await fetch(`/api/projects/${projectId}`);
     if (!response.ok) throw new Error('Erro ao carregar projeto.');
     const project = await response.json();
+    resetWorkflow();
     hydrateStateFromProject(project);
   } catch (error) {
     alert('Não foi possível carregar o projeto selecionado.');
@@ -626,7 +657,11 @@ selectors.panoramaInput.addEventListener('change', async event => {
   }
   refreshPanoramaList();
   prepareCanvas();
-  selectors.hotspotSection.style.display = 'none';
+  if (!hotspotStageOpened) {
+    selectors.hotspotSection.style.display = 'none';
+  } else {
+    prepareHotspots();
+  }
   updateWorkflowVisibility();
   if (selectors.publishSection.style.display !== 'none') {
     showPublishStep();
@@ -664,10 +699,12 @@ selectors.floorPlanCanvas.addEventListener('click', event => {
   showPublishStep();
 });
 
-selectors.goHotspots.addEventListener('click', () => {
+selectors.goHotspots.addEventListener('click', async () => {
   if (selectors.goHotspots.disabled) return;
+  hotspotStageOpened = true;
   selectors.hotspotSection.style.display = 'block';
-  prepareHotspots();
+  await prepareHotspots({ autoFullscreen: !hasTriggeredHotspotFullscreen });
+  hasTriggeredHotspotFullscreen = true;
   showPublishStep();
   selectors.hotspotSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
