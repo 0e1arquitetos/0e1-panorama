@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QR Panorama | ZERO E UM arquitetos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Exo:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/panorama.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <div class="brand">0E1 arquitetos</div>
+      <div class="project-highlight" id="panorama-project-name"></div>
+    </header>
+    <main>
+      <section>
+        <h1>Panorama individual</h1>
+        <div class="flex">
+          <div class="card" style="flex: 1 1 420px;">
+            <h2 id="panorama-name"></h2>
+            <div class="visual-canvas">
+              <img id="panorama-image" alt="Panorama" />
+            </div>
+          </div>
+          <div class="card" style="flex: 1 1 320px;">
+            <h2>QR code para compartilhamento</h2>
+            <div class="qr-container">
+              <div id="qr-preview"></div>
+              <div class="qr-actions">
+                <button id="download-svg">Baixar SVG</button>
+                <button id="copy-link">Copiar link</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>ZERO E UM arquitetos • Compartilhamento rápido</footer>
+  </body>
+</html>

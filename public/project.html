@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tour virtual | ZERO E UM arquitetos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Exo:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/project.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <div class="brand">0E1 arquitetos</div>
+      <div class="project-highlight" id="project-name-display"></div>
+    </header>
+    <main>
+      <section>
+        <h1>Tour virtual</h1>
+        <div class="flex">
+          <div class="card" style="flex: 1 1 420px;">
+            <h2>Planta de navegação</h2>
+            <div class="visual-canvas" id="viewer-floor-plan">
+              <img id="viewer-floor-plan-img" alt="Planta do projeto" />
+            </div>
+          </div>
+          <div class="card" style="flex: 1 1 420px;">
+            <h2>Panorama ativo</h2>
+            <div class="visual-canvas" id="viewer-panorama">
+              <img id="viewer-panorama-img" alt="Panorama atual" />
+            </div>
+            <div class="links" id="panorama-links" style="margin-top: 16px;"></div>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>Pontos disponíveis</h2>
+        <div class="list" id="panorama-list"></div>
+      </section>
+    </main>
+    <footer>ZERO E UM arquitetos • Tour digital</footer>
+  </body>
+</html>
