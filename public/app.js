@@ -36,6 +36,27 @@ let placementViewer = null;
 let hotspotViewer = null;
 let hotspotMarkers = null;
 
+let viewerReadyPromise = null;
+
+function waitForViewerLibrary() {
+  if (viewerAvailable()) {
+    return Promise.resolve();
+  }
+  if (!viewerReadyPromise) {
+    viewerReadyPromise = new Promise(resolve => {
+      const check = () => {
+        if (viewerAvailable()) {
+          resolve();
+        } else {
+          setTimeout(check, 60);
+        }
+      };
+      check();
+    });
+  }
+  return viewerReadyPromise;
+}
+
 function allPanoramasPositioned() {
   return state.panoramas.length > 0 && state.panoramas.every(p => p.floorPosition);
 }
@@ -85,7 +106,9 @@ function focusPanorama(panoramaId, { scrollToCanvas = false } = {}) {
 }
 
 async function showPlacementPanorama(panorama) {
-  if (!viewerAvailable() || !selectors.placementViewer || !panorama) return;
+  if (!selectors.placementViewer || !panorama) return;
+  await waitForViewerLibrary();
+  if (!viewerAvailable()) return;
   if (!placementViewer) {
     placementViewer = new PhotoSphereViewer.Viewer({
       container: selectors.placementViewer,
@@ -143,7 +166,9 @@ function formatAngles(hotspot) {
 }
 
 async function ensureHotspotViewer(panorama) {
-  if (!viewerAvailable() || !selectors.hotspotViewer || !panorama) return;
+  if (!selectors.hotspotViewer || !panorama) return;
+  await waitForViewerLibrary();
+  if (!viewerAvailable()) return;
   if (!hotspotViewer) {
     hotspotViewer = new PhotoSphereViewer.Viewer({
       container: selectors.hotspotViewer,
