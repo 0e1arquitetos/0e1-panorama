@@ -3,8 +3,7 @@ const state = {
   name: '',
   description: '',
   floorPlan: null,
-  panoramas: [],
-  activePanoramaId: null
+  panoramas: []
 };
 
 const selectors = {
@@ -18,12 +17,11 @@ const selectors = {
   floorPlanSection: document.getElementById('floor-plan-section'),
   floorPlanCanvas: document.getElementById('floor-plan-canvas'),
   floorPlanPreview: document.getElementById('floor-plan-preview'),
-  placementViewer: document.getElementById('placement-viewer'),
-  goHotspots: document.getElementById('go-hotspots'),
   activePanoramaSelect: document.getElementById('active-panorama'),
   markerSummary: document.getElementById('marker-summary'),
   hotspotSection: document.getElementById('hotspot-section'),
-  hotspotViewer: document.getElementById('hotspot-viewer'),
+  panoramaCanvas: document.getElementById('panorama-canvas'),
+  panoramaPreview: document.getElementById('panorama-preview'),
   hotspotPanorama: document.getElementById('hotspot-panorama'),
   hotspotSummary: document.getElementById('hotspot-summary'),
   publishSection: document.getElementById('publish-section'),
@@ -31,183 +29,6 @@ const selectors = {
   publishButton: document.getElementById('publish-project'),
   headerProject: document.getElementById('header-project')
 };
-
-let placementViewer = null;
-let hotspotViewer = null;
-let hotspotMarkers = null;
-
-function allPanoramasPositioned() {
-  return state.panoramas.length > 0 && state.panoramas.every(p => p.floorPosition);
-}
-
-function updateWorkflowVisibility() {
-  const hasEssentials = Boolean(state.name && state.floorPlan && state.panoramas.length);
-  selectors.floorPlanSection.style.display = hasEssentials ? 'block' : 'none';
-
-  const positioned = hasEssentials && allPanoramasPositioned();
-  selectors.goHotspots.disabled = !positioned;
-  selectors.goHotspots.textContent = positioned
-    ? 'Avançar para hotspots'
-    : 'Posicione todas as câmeras';
-
-  if (!positioned) {
-    selectors.hotspotSection.style.display = 'none';
-  }
-}
-
-function viewerAvailable() {
-  return typeof window !== 'undefined' && window.PhotoSphereViewer;
-}
-
-function focusPanorama(panoramaId, { scrollToCanvas = false } = {}) {
-  if (!panoramaId) return;
-  const panorama = state.panoramas.find(p => p.id === panoramaId);
-  if (!panorama) return;
-  state.activePanoramaId = panoramaId;
-  if (selectors.activePanoramaSelect) {
-    selectors.activePanoramaSelect.value = panoramaId;
-  }
-  showPlacementPanorama(panorama);
-  if (selectors.panoramaList) {
-    selectors.panoramaList
-      .querySelectorAll('.list-item')
-      .forEach(item => item.classList.toggle('is-active', item.dataset.panoramaId === panoramaId));
-  }
-  if (selectors.floorPlanCanvas) {
-    const markers = selectors.floorPlanCanvas.querySelectorAll('.marker');
-    markers.forEach(marker => {
-      marker.classList.toggle('active', marker.dataset.panoramaId === panoramaId);
-    });
-  }
-  if (scrollToCanvas && selectors.floorPlanSection) {
-    selectors.floorPlanSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-}
-
-async function showPlacementPanorama(panorama) {
-  if (!viewerAvailable() || !selectors.placementViewer || !panorama) return;
-  if (!placementViewer) {
-    placementViewer = new PhotoSphereViewer.Viewer({
-      container: selectors.placementViewer,
-      panorama: panorama.dataUrl,
-      navbar: ['zoom', 'fullscreen', 'move'],
-      touchmoveTwoFingers: true,
-      loadingTxt: 'Carregando panorama...'
-    });
-  } else {
-    try {
-      await placementViewer.setPanorama(panorama.dataUrl, { transition: false });
-    } catch (error) {
-      console.warn('Não foi possível carregar o panorama selecionado.', error);
-    }
-  }
-}
-
-function yawPitchToPercent(yaw, pitch) {
-  const normalizedYaw = ((yaw + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-  const x = (normalizedYaw / (2 * Math.PI)) * 100;
-  const clampedPitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
-  const y = ((Math.PI / 2 - clampedPitch) / Math.PI) * 100;
-  return {
-    x: Number(x.toFixed(2)),
-    y: Number(y.toFixed(2))
-  };
-}
-
-function percentToYawPitch(x, y) {
-  if (typeof x !== 'number' || typeof y !== 'number') {
-    return { yaw: 0, pitch: 0 };
-  }
-  const yaw = ((x / 100) * 2 * Math.PI) - Math.PI;
-  const pitch = Math.PI / 2 - (y / 100) * Math.PI;
-  return { yaw, pitch };
-}
-
-function normaliseHotspotAngles(hotspot) {
-  if (typeof hotspot.yaw === 'number' && typeof hotspot.pitch === 'number') {
-    return hotspot;
-  }
-  const { yaw, pitch } = percentToYawPitch(hotspot.x, hotspot.y);
-  return {
-    ...hotspot,
-    yaw,
-    pitch
-  };
-}
-
-function formatAngles(hotspot) {
-  return {
-    yaw: `${(hotspot.yaw * (180 / Math.PI)).toFixed(1)}º`,
-    pitch: `${(hotspot.pitch * (180 / Math.PI)).toFixed(1)}º`
-  };
-}
-
-async function ensureHotspotViewer(panorama) {
-  if (!viewerAvailable() || !selectors.hotspotViewer || !panorama) return;
-  if (!hotspotViewer) {
-    hotspotViewer = new PhotoSphereViewer.Viewer({
-      container: selectors.hotspotViewer,
-      panorama: panorama.dataUrl,
-      navbar: ['zoom', 'fullscreen', 'move'],
-      touchmoveTwoFingers: true,
-      loadingTxt: 'Carregando panorama...',
-      plugins: [[PhotoSphereViewer.MarkersPlugin, { markers: [] }]]
-    });
-    hotspotMarkers = hotspotViewer.getPlugin(PhotoSphereViewer.MarkersPlugin);
-    hotspotViewer.on('click', ({ yaw, pitch }) => handleHotspotClick(yaw, pitch));
-  } else {
-    try {
-      await hotspotViewer.setPanorama(panorama.dataUrl, { transition: false });
-    } catch (error) {
-      console.warn('Não foi possível carregar o panorama para hotspots.', error);
-    }
-  }
-  updateHotspotMarkers(panorama);
-}
-
-function updateHotspotMarkers(panorama) {
-  if (!hotspotMarkers) return;
-  const markers = panorama.hotspots.map((hotspot, index) => {
-    const destination = state.panoramas.find(p => p.id === hotspot.targetPanoramaId);
-    return {
-      id: hotspot.id,
-      yaw: hotspot.yaw,
-      pitch: hotspot.pitch,
-      html: `<span class="hotspot-marker">${index + 1}</span>`,
-      tooltip: destination ? `Vai para ${destination.name || destination.filename}` : 'Selecione o destino',
-      anchor: 'center center'
-    };
-  });
-  hotspotMarkers.setMarkers(markers);
-}
-
-function handleHotspotClick(yaw, pitch) {
-  const panoramaId = selectors.hotspotPanorama.value;
-  if (!panoramaId) {
-    alert('Selecione um panorama para adicionar hotspots.');
-    return;
-  }
-  const panorama = state.panoramas.find(p => p.id === panoramaId);
-  if (!panorama) return;
-  const possibleTargets = state.panoramas.filter(p => p.id !== panoramaId);
-  if (!possibleTargets.length) {
-    alert('Cadastre pelo menos dois panoramas para criar hotspots.');
-    return;
-  }
-  const { x, y } = yawPitchToPercent(yaw, pitch);
-  const newHotspot = normaliseHotspotAngles({
-    id: generateLocalId('hotspot'),
-    x,
-    y,
-    targetPanoramaId: possibleTargets[0].id,
-    yaw,
-    pitch
-  });
-  panorama.hotspots.push(newHotspot);
-  renderHotspots(panoramaId);
-  refreshPanoramaList();
-  showPublishStep();
-}
 
 function generateLocalId(prefix = 'id') {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
@@ -227,9 +48,6 @@ function resetWorkflow() {
   selectors.hotspotSection.style.display = 'none';
   selectors.publishSection.style.display = 'none';
   selectors.publishReview.innerHTML = '';
-  selectors.goHotspots.disabled = true;
-  selectors.goHotspots.textContent = 'Posicione todas as câmeras';
-  state.activePanoramaId = null;
 }
 
 function updateHeaderProject(name = 'Studio Panorama') {
@@ -238,87 +56,20 @@ function updateHeaderProject(name = 'Studio Panorama') {
 
 function refreshPanoramaList() {
   selectors.panoramaList.innerHTML = '';
-  if (!state.panoramas.length) {
-    const empty = document.createElement('p');
-    empty.className = 'muted';
-    empty.textContent = 'Adicione panoramas para iniciar o posicionamento.';
-    selectors.panoramaList.appendChild(empty);
-    updateWorkflowVisibility();
-    return;
-  }
   state.panoramas.forEach((panorama, index) => {
     const item = document.createElement('div');
-    item.className = 'list-item panorama-item';
-    item.dataset.panoramaId = panorama.id;
-
-    const thumb = document.createElement('img');
-    thumb.className = 'panorama-thumb';
-    thumb.src = panorama.dataUrl;
-    thumb.alt = `Panorama ${panorama.name || panorama.filename}`;
-
-    const hasPosition = Boolean(panorama.floorPosition);
-    const status = [
-      hasPosition ? 'Na planta' : 'Sem posição',
-      `${panorama.hotspots.length} hotspot${panorama.hotspots.length === 1 ? '' : 's'}`
-    ].join(' • ');
-
-    const textWrapper = document.createElement('div');
-    textWrapper.innerHTML = `
-      <strong>${index + 1}. ${panorama.name || panorama.filename}</strong>
-      <br />
-      <small class="muted">${status}</small>
+    item.className = 'list-item';
+    item.innerHTML = `
+      <span><strong>${index + 1}. ${panorama.name || panorama.filename}</strong></span>
+      <span class="badge">${panorama.hotspots.length} hotspots</span>
     `;
-
-    const info = document.createElement('div');
-    info.className = 'panorama-info';
-    info.appendChild(thumb);
-    info.appendChild(textWrapper);
-
-    const badge = document.createElement('span');
-    badge.className = 'badge';
-    badge.style.background = hasPosition ? 'rgba(0,255,203,0.25)' : 'rgba(253,137,255,0.25)';
-    badge.style.color = hasPosition ? 'var(--brand-teal)' : 'var(--brand-indigo)';
-    badge.textContent = hasPosition ? 'Posicionado' : 'Pendente';
-
-    const action = document.createElement('button');
-    action.type = 'button';
-    action.className = 'secondary-button';
-    action.textContent = hasPosition ? 'Rever posição' : 'Posicionar';
-    action.addEventListener('click', event => {
-      event.stopPropagation();
-      focusPanorama(panorama.id, { scrollToCanvas: true });
-    });
-
-    const meta = document.createElement('div');
-    meta.className = 'panorama-meta';
-    meta.appendChild(badge);
-    meta.appendChild(action);
-
-    item.appendChild(info);
-    item.appendChild(meta);
-    item.addEventListener('click', () => focusPanorama(panorama.id, { scrollToCanvas: true }));
-    item.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        focusPanorama(panorama.id, { scrollToCanvas: true });
-      }
-    });
-    item.tabIndex = 0;
-
-    if (state.activePanoramaId === panorama.id) {
-      item.classList.add('is-active');
-    }
-
     selectors.panoramaList.appendChild(item);
   });
-  updateWorkflowVisibility();
 }
 
 function populatePanoramaSelects() {
   const selects = [selectors.activePanoramaSelect, selectors.hotspotPanorama];
   selects.forEach(select => {
-    if (!select) return;
-    const previousValue = select.value;
     select.innerHTML = '';
     const placeholder = document.createElement('option');
     placeholder.value = '';
@@ -330,9 +81,6 @@ function populatePanoramaSelects() {
       option.textContent = panorama.name || panorama.filename;
       select.appendChild(option);
     });
-    if (previousValue) {
-      select.value = previousValue;
-    }
   });
 }
 
@@ -346,14 +94,6 @@ function renderMarkers() {
     marker.style.left = `${panorama.floorPosition.x}%`;
     marker.style.top = `${panorama.floorPosition.y}%`;
     marker.title = panorama.name || panorama.filename;
-    marker.dataset.panoramaId = panorama.id;
-    if (state.activePanoramaId === panorama.id) {
-      marker.classList.add('active');
-    }
-    marker.addEventListener('click', event => {
-      event.stopPropagation();
-      focusPanorama(panorama.id);
-    });
     selectors.floorPlanCanvas.appendChild(marker);
   });
 
@@ -370,30 +110,26 @@ function renderMarkers() {
     `;
     selectors.markerSummary.appendChild(summaryItem);
   });
-
-  updateWorkflowVisibility();
 }
 
-async function renderHotspots(panoramaId) {
+function renderHotspots(panoramaId) {
+  selectors.panoramaCanvas.querySelectorAll('.hotspot').forEach(h => h.remove());
   const panorama = state.panoramas.find(p => p.id === panoramaId);
-  if (!panorama) {
-    selectors.hotspotSummary.innerHTML = '';
-    hotspotMarkers?.setMarkers([]);
-    return;
-  }
-  selectors.hotspotPanorama.value = panoramaId;
-  panorama.hotspots = panorama.hotspots.map(normaliseHotspotAngles);
-  await ensureHotspotViewer(panorama);
-  updateHotspotMarkers(panorama);
+  if (!panorama) return;
+  selectors.panoramaPreview.src = panorama.dataUrl;
+  selectors.panoramaPreview.style.display = 'block';
+
+  panorama.hotspots.forEach((hotspot, index) => {
+    const element = document.createElement('div');
+    element.className = 'hotspot';
+    element.textContent = index + 1;
+    element.style.left = `${hotspot.x}%`;
+    element.style.top = `${hotspot.y}%`;
+    element.title = `Vai para ${(state.panoramas.find(p => p.id === hotspot.targetPanoramaId)?.name) || 'Panorama'}`;
+    selectors.panoramaCanvas.appendChild(element);
+  });
 
   selectors.hotspotSummary.innerHTML = '';
-  if (!panorama.hotspots.length) {
-    const empty = document.createElement('p');
-    empty.textContent = 'Nenhum hotspot criado ainda. Clique no panorama para adicionar.';
-    selectors.hotspotSummary.appendChild(empty);
-    return;
-  }
-
   panorama.hotspots.forEach((hotspot, index) => {
     const item = document.createElement('div');
     item.className = 'list-item';
@@ -409,10 +145,7 @@ async function renderHotspots(panoramaId) {
     });
     select.addEventListener('change', () => {
       hotspot.targetPanoramaId = select.value;
-      updateHotspotMarkers(panorama);
       renderHotspots(panoramaId);
-      refreshPanoramaList();
-      showPublishStep();
     });
 
     const removeButton = document.createElement('button');
@@ -420,15 +153,12 @@ async function renderHotspots(panoramaId) {
     removeButton.style.background = 'rgba(253,137,255,0.75)';
     removeButton.addEventListener('click', () => {
       panorama.hotspots = panorama.hotspots.filter(h => h.id !== hotspot.id);
-      updateHotspotMarkers(panorama);
       renderHotspots(panoramaId);
       refreshPanoramaList();
-      showPublishStep();
     });
 
-    const label = document.createElement('div');
-    const angles = formatAngles(hotspot);
-    label.innerHTML = `<strong>${index + 1}.</strong> Hotspot → ${(destination?.name || destination?.filename || 'Selecione destino')}<br><small class="muted">Yaw ${angles.yaw} • Pitch ${angles.pitch}</small>`;
+    const label = document.createElement('span');
+    label.innerHTML = `<strong>${index + 1}.</strong> Hotspot → ${(destination?.name || destination?.filename || 'Selecione destino')}`;
 
     const container = document.createElement('div');
     container.style.display = 'flex';
@@ -511,16 +241,12 @@ function prepareCanvas() {
   selectors.floorPlanPreview.src = state.floorPlan?.dataUrl || '';
   selectors.floorPlanPreview.style.display = state.floorPlan ? 'block' : 'none';
   populatePanoramaSelects();
-  const activeId = state.activePanoramaId || selectors.activePanoramaSelect.value || state.panoramas[0]?.id;
-  if (activeId) {
-    focusPanorama(activeId);
-  }
   renderMarkers();
 }
 
 function prepareHotspots() {
   populatePanoramaSelects();
-  if (state.panoramas.length && allPanoramasPositioned()) {
+  if (state.panoramas.length) {
     const panoramaId = selectors.hotspotPanorama.value || state.panoramas[0].id;
     selectors.hotspotPanorama.value = panoramaId;
     renderHotspots(panoramaId);
@@ -535,20 +261,17 @@ function hydrateStateFromProject(project) {
   state.panoramas = project.panoramas.map(p => ({
     ...p,
     floorPosition: p.floorPosition || null,
-    hotspots: Array.isArray(p.hotspots) ? p.hotspots.map(normaliseHotspotAngles) : []
+    hotspots: Array.isArray(p.hotspots) ? p.hotspots : []
   }));
-  state.activePanoramaId = state.panoramas[0]?.id || null;
 
   selectors.projectName.value = state.name;
   selectors.projectDescription.value = state.description;
   updateHeaderProject(state.name);
   refreshPanoramaList();
+  selectors.floorPlanSection.style.display = 'block';
+  selectors.hotspotSection.style.display = 'block';
   prepareCanvas();
-  updateWorkflowVisibility();
-  if (allPanoramasPositioned()) {
-    selectors.hotspotSection.style.display = 'block';
-    prepareHotspots();
-  }
+  prepareHotspots();
   showPublishStep();
 }
 
@@ -583,7 +306,6 @@ selectors.floorPlanInput.addEventListener('change', async event => {
   selectors.floorPlanPreview.src = dataUrl;
   selectors.floorPlanSection.style.display = 'block';
   prepareCanvas();
-  updateWorkflowVisibility();
 });
 
 selectors.panoramaInput.addEventListener('change', async event => {
@@ -600,26 +322,27 @@ selectors.panoramaInput.addEventListener('change', async event => {
     });
   }
   refreshPanoramaList();
-  prepareCanvas();
-  selectors.hotspotSection.style.display = 'none';
-  updateWorkflowVisibility();
-  if (selectors.publishSection.style.display !== 'none') {
-    showPublishStep();
-  }
+  populatePanoramaSelects();
+  selectors.hotspotSection.style.display = state.panoramas.length ? 'block' : 'none';
 });
 
 selectors.startConfig.addEventListener('click', () => {
   if (!ensureWorkflowReady()) return;
   selectors.floorPlanSection.style.display = 'block';
-  selectors.hotspotSection.style.display = 'none';
-  selectors.publishSection.style.display = 'block';
+  selectors.hotspotSection.style.display = 'block';
   prepareCanvas();
-  updateWorkflowVisibility();
+  if (state.panoramas.length) {
+    const defaultPanorama = state.panoramas[0].id;
+    selectors.activePanoramaSelect.value = defaultPanorama;
+    selectors.hotspotPanorama.value = defaultPanorama;
+    selectors.panoramaPreview.src = state.panoramas[0].dataUrl;
+    renderHotspots(defaultPanorama);
+  }
   showPublishStep();
 });
 
-selectors.activePanoramaSelect.addEventListener('change', event => {
-  focusPanorama(event.target.value);
+selectors.activePanoramaSelect.addEventListener('change', () => {
+  // No additional action needed beyond selection for placement.
 });
 
 selectors.floorPlanCanvas.addEventListener('click', event => {
@@ -635,16 +358,7 @@ selectors.floorPlanCanvas.addEventListener('click', event => {
   if (!panorama) return;
   panorama.floorPosition = { x: Number(x.toFixed(2)), y: Number(y.toFixed(2)) };
   renderMarkers();
-  refreshPanoramaList();
   showPublishStep();
-});
-
-selectors.goHotspots.addEventListener('click', () => {
-  if (selectors.goHotspots.disabled) return;
-  selectors.hotspotSection.style.display = 'block';
-  prepareHotspots();
-  showPublishStep();
-  selectors.hotspotSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 selectors.hotspotPanorama.addEventListener('change', event => {
@@ -653,15 +367,37 @@ selectors.hotspotPanorama.addEventListener('change', event => {
   renderHotspots(panoramaId);
 });
 
+selectors.panoramaCanvas.addEventListener('click', event => {
+  const panoramaId = selectors.hotspotPanorama.value;
+  if (!panoramaId) {
+    alert('Selecione um panorama para adicionar hotspots.');
+    return;
+  }
+  const panorama = state.panoramas.find(p => p.id === panoramaId);
+  if (!panorama) return;
+  const rect = selectors.panoramaCanvas.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * 100;
+  const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+  const possibleTargets = state.panoramas.filter(p => p.id !== panoramaId);
+  if (!possibleTargets.length) {
+    alert('Cadastre pelo menos dois panoramas para criar hotspots.');
+    return;
+  }
+
+  const target = possibleTargets[0].id;
+  panorama.hotspots.push({
+    id: generateLocalId('hotspot'),
+    x: Number(x.toFixed(2)),
+    y: Number(y.toFixed(2)),
+    targetPanoramaId: target
+  });
+  renderHotspots(panoramaId);
+  refreshPanoramaList();
+  showPublishStep();
+});
+
 selectors.publishButton.addEventListener('click', async () => {
-  if (!allPanoramasPositioned()) {
-    alert('Posicione todas as câmeras na planta antes de publicar.');
-    return;
-  }
-  if (state.panoramas.some(p => p.hotspots.length === 0)) {
-    alert('Configure pelo menos um hotspot em cada panorama antes de publicar.');
-    return;
-  }
   const payload = {
     name: state.name,
     description: state.description,
