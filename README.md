@@ -14,7 +14,7 @@ Aplicativo web que permite criar, configurar e compartilhar passeios virtuais ba
 - Pode ser executado em serviços gratuitos como Vercel, Render ou Railway (aplicação Node.js sem dependências externas).
 
 ## Estrutura do projeto
-
+teste
 ```
 .
 ├── data/
