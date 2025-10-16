@@ -23,37 +23,6 @@ body {
   min-height: 100vh;
 }
 
-.viewer-360 {
-  position: relative;
-  width: 100%;
-  height: 320px;
-  background: linear-gradient(135deg, rgba(36, 54, 190, 0.08), rgba(0, 255, 203, 0.08));
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.viewer-360 .psv-container {
-  border-radius: 16px;
-}
-
-.muted {
-  color: rgba(5, 7, 43, 0.55);
-  display: block;
-}
-
-.hotspot-marker {
-  display: inline-flex;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(0, 255, 203, 0.9);
-  color: var(--brand-teal);
-  font-weight: 600;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid rgba(5, 7, 43, 0.15);
-}
-
 a {
   color: var(--brand-blue);
   text-decoration: none;
@@ -207,11 +176,6 @@ button:disabled {
 .marker {
   background: var(--brand-green);
   box-shadow: 0 4px 12px rgba(0, 255, 203, 0.35);
-}
-
-.marker.active {
-  box-shadow: 0 0 0 4px rgba(36, 54, 223, 0.35);
-  border-color: var(--brand-indigo);
 }
 
 .hotspot {

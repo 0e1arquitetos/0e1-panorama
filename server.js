@@ -54,7 +54,7 @@ function parseBody(req) {
     let data = '';
     req.on('data', chunk => {
       data += chunk.toString();
-      if (data.length > 50 * 1024 * 1024) {
+      if (data.length > 10 * 1024 * 1024) {
         reject(new Error('Payload muito grande.'));
         req.destroy();
       }

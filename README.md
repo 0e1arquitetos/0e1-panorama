@@ -5,8 +5,8 @@ Aplicativo web que permite criar, configurar e compartilhar passeios virtuais ba
 ## Requisitos atendidos
 
 - Upload da planta baixa e de imagens panorâmicas em um novo projeto.
-- Posicionamento das câmeras diretamente sobre a planta com pré-visualização 360º.
-- Configuração de hotspots entre panoramas com visualização esférica interativa.
+- Posicionamento das câmeras diretamente sobre a planta.
+- Configuração de hotspots entre panoramas para navegação no tour.
 - Geração automática de URLs públicas para o projeto completo (`/projects/:id`) e para cada panorama individual (`/panoramas/:projectId/:panoramaId`).
 - Página dedicada a cada panorama com QR Code em SVG para download.
 - Layout e cores alinhados ao manual de marca fornecido.
@@ -58,14 +58,7 @@ O servidor será iniciado em `http://localhost:3000`.
         "dataUrl": "data:image/png;base64,...",
         "floorPosition": { "x": 50, "y": 32 },
         "hotspots": [
-          {
-            "id": "hotspot-1",
-            "x": 64,
-            "y": 42,
-            "yaw": 1.05,
-            "pitch": -0.18,
-            "targetPanoramaId": "panorama-456"
-          }
+          { "id": "hotspot-1", "x": 64, "y": 42, "targetPanoramaId": "panorama-456" }
         ]
       }
     ]

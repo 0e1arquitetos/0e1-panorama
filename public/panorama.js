@@ -8,33 +8,13 @@ const panoramaId = pathMatch ? decodeURIComponent(pathMatch[2]) : params.get('pa
 const elements = {
   projectName: document.getElementById('panorama-project-name'),
   panoramaName: document.getElementById('panorama-name'),
-  panoramaViewer: document.getElementById('single-panorama-viewer'),
+  panoramaImage: document.getElementById('panorama-image'),
   qrPreview: document.getElementById('qr-preview'),
   downloadSvg: document.getElementById('download-svg'),
   copyLink: document.getElementById('copy-link')
 };
 
 let shareUrl = '';
-let viewer = null;
-
-function viewerAvailable() {
-  return typeof window !== 'undefined' && window.PhotoSphereViewer;
-}
-
-async function showPanorama(panorama) {
-  if (!viewerAvailable() || !elements.panoramaViewer || !panorama?.dataUrl) return;
-  if (!viewer) {
-    viewer = new PhotoSphereViewer.Viewer({
-      container: elements.panoramaViewer,
-      panorama: panorama.dataUrl,
-      navbar: ['zoom', 'fullscreen', 'move'],
-      touchmoveTwoFingers: true,
-      loadingTxt: 'Carregando panorama...'
-    });
-  } else {
-    await viewer.setPanorama(panorama.dataUrl, { transition: false });
-  }
-}
 
 function downloadSvg(svgContent, fileName) {
   const blob = new Blob([svgContent], { type: 'image/svg+xml' });
@@ -62,7 +42,7 @@ async function loadPanorama() {
     shareUrl = `${window.location.origin}/panoramas/${project.id}/${panorama.id}`;
     elements.projectName.textContent = project.name;
     elements.panoramaName.textContent = panorama.name || panorama.filename;
-    await showPanorama(panorama);
+    elements.panoramaImage.src = panorama.dataUrl;
 
     const svg = createQrSvg(shareUrl, {
       color: '#2436be',
