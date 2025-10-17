@@ -1,7 +1,7 @@
 const DEFAULT_OPTIONS = {
   initialYaw: 0,
   initialPitch: 0,
-  initialFov: 70,
+  initialFov: null,
   minFov: 40,
   maxFov: 90,
   inertia: 0.9,
@@ -163,7 +163,8 @@ export class PanoramaViewer {
 
     this.yaw = this.options.initialYaw;
     this.pitch = this.options.initialPitch;
-    this.fov = this.options.initialFov;
+    const startingFov = this.options.initialFov ?? this.options.maxFov;
+    this.fov = clamp(startingFov, this.options.minFov, this.options.maxFov);
     this.velocityYaw = 0;
     this.velocityPitch = 0;
 
@@ -338,6 +339,8 @@ export class PanoramaViewer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
     this.image = image;
+    this.fov = this.options.maxFov;
+    this.projectionMatrix = createProjectionMatrix(this.fov, this.aspect);
   }
 
   setMarkers(markers = []) {
@@ -429,10 +432,10 @@ export class PanoramaViewer {
     this.lastPointer = { x: event.clientX, y: event.clientY };
 
     const speed = this.options.rotateSpeed;
-    this.yaw = wrapAngle(this.yaw - dx * speed);
-    this.pitch = clamp(this.pitch + dy * speed, -Math.PI / 2 + 0.01, Math.PI / 2 - 0.01);
-    this.velocityYaw = -dx * speed;
-    this.velocityPitch = dy * speed;
+    this.yaw = wrapAngle(this.yaw + dx * speed);
+    this.pitch = clamp(this.pitch - dy * speed, -Math.PI / 2 + 0.01, Math.PI / 2 - 0.01);
+    this.velocityYaw = dx * speed;
+    this.velocityPitch = -dy * speed;
   }
 
   onPointerUp(event) {
