@@ -21,7 +21,7 @@ const selectors = {
   workspaceSection: document.getElementById('workspace-section'),
   floorPlanCanvas: document.getElementById('workspace-floor-plan'),
   floorPlanPreview: document.getElementById('floor-plan-preview'),
-  panoramaStrip: document.getElementById('panorama-strip'),
+  panoramaList: document.getElementById('workspace-panorama-list'),
   workspaceViewer: document.getElementById('workspace-viewer'),
   workspaceHint: document.getElementById('workspace-hint'),
   modeButtons: document.querySelectorAll('[data-mode]'),
@@ -109,10 +109,16 @@ function updateWorkspaceHint() {
 
 function highlightActivePanorama() {
   const activeId = state.activePanoramaId;
-  if (selectors.panoramaStrip) {
-    selectors.panoramaStrip
-      .querySelectorAll('.panorama-chip')
-      .forEach(button => button.classList.toggle('is-active', button.dataset.panoramaId === activeId));
+  if (selectors.panoramaList) {
+    selectors.panoramaList
+      .querySelectorAll('.panorama-item')
+      .forEach(button => {
+        const isActive = button.dataset.panoramaId === activeId;
+        button.classList.toggle('is-active', isActive);
+        if (isActive) {
+          button.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      });
   }
   if (selectors.floorPlanCanvas) {
     selectors.floorPlanCanvas
@@ -311,8 +317,8 @@ function resetWorkflow() {
   }
   setMode('view');
   updateWorkspaceHint();
-  if (selectors.panoramaStrip) {
-    selectors.panoramaStrip.innerHTML = '';
+  if (selectors.panoramaList) {
+    selectors.panoramaList.innerHTML = '';
   }
   if (selectors.hotspotList) {
     selectors.hotspotList.innerHTML = '';
@@ -324,33 +330,72 @@ function updateHeaderProject(name = 'Studio Panorama') {
 }
 
 function refreshPanoramaList() {
-  if (!selectors.panoramaStrip) return;
-  selectors.panoramaStrip.innerHTML = '';
+  if (!selectors.panoramaList) return;
+  selectors.panoramaList.innerHTML = '';
   if (!state.panoramas.length) {
     const empty = document.createElement('p');
     empty.className = 'muted';
     empty.textContent = 'Adicione panoramas para iniciar o posicionamento.';
-    selectors.panoramaStrip.appendChild(empty);
+    selectors.panoramaList.appendChild(empty);
     updateWorkspaceHint();
     updateWorkflowVisibility();
     return;
   }
 
   state.panoramas.forEach((panorama, index) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'panorama-chip';
-    button.dataset.panoramaId = panorama.id;
     const hasPosition = Boolean(panorama.floorPosition);
     const hasHotspots = panorama.hotspots.length > 0;
-    button.innerHTML = `
-      <span class="chip-index">${index + 1}</span>
-      <span class="chip-name">${panorama.name || panorama.filename}</span>
-      <span class="chip-status ${hasPosition ? 'is-ready' : 'is-pending'}">${hasPosition ? 'Na planta' : 'Sem posição'}</span>
-      <span class="chip-status ${hasHotspots ? 'is-ready' : 'is-pending'}">${panorama.hotspots.length} hotspot${panorama.hotspots.length === 1 ? '' : 's'}</span>
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'list-item panorama-item';
+    button.dataset.panoramaId = panorama.id;
+
+    const info = document.createElement('div');
+    info.className = 'panorama-info';
+
+    const thumb = document.createElement('img');
+    thumb.className = 'panorama-thumb';
+    thumb.src = panorama.dataUrl;
+    thumb.alt = `Prévia do panorama ${index + 1}`;
+
+    const title = document.createElement('div');
+    title.innerHTML = `
+      <strong>${index + 1}. ${panorama.name || panorama.filename}</strong>
+      <small class="muted">${hasPosition ? 'Posicionado na planta' : 'Sem posição definida'}</small>
     `;
-    button.addEventListener('click', () => focusPanorama(panorama.id));
-    selectors.panoramaStrip.appendChild(button);
+
+    info.appendChild(thumb);
+    info.appendChild(title);
+
+    const meta = document.createElement('div');
+    meta.className = 'panorama-meta';
+
+    const badges = [
+      {
+        text: hasPosition ? 'Na planta' : 'Sem posição',
+        background: hasPosition ? 'rgba(0,255,203,0.15)' : 'rgba(253,137,255,0.2)',
+        color: hasPosition ? 'var(--brand-dark)' : 'var(--brand-indigo)'
+      },
+      {
+        text: `${panorama.hotspots.length} hotspot${panorama.hotspots.length === 1 ? '' : 's'}`,
+        background: hasHotspots ? 'rgba(49,84,223,0.15)' : 'rgba(253,137,255,0.2)',
+        color: 'var(--brand-indigo)'
+      }
+    ];
+
+    badges.forEach(({ text, background, color }) => {
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = text;
+      badge.style.background = background;
+      badge.style.color = color;
+      meta.appendChild(badge);
+    });
+
+    button.appendChild(info);
+    button.appendChild(meta);
+    button.addEventListener('click', () => focusPanorama(panorama.id, { scrollToFloor: false }));
+    selectors.panoramaList.appendChild(button);
   });
 
   highlightActivePanorama();
@@ -565,7 +610,7 @@ selectors.modeButtons.forEach(button => {
 selectors.floorPlanCanvas.addEventListener('click', event => {
   const activeId = state.activePanoramaId;
   if (!activeId) {
-    alert('Selecione um panorama na faixa de imagens antes de marcar a posição.');
+    alert('Selecione um panorama na lista de imagens antes de marcar a posição.');
     return;
   }
   const rect = selectors.floorPlanCanvas.getBoundingClientRect();

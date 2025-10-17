@@ -431,9 +431,12 @@ export class PanoramaViewer {
     this.dragDistance += Math.abs(dx) + Math.abs(dy);
     this.lastPointer = { x: event.clientX, y: event.clientY };
 
-    const speed = this.options.rotateSpeed;
-    const yawDelta = dx * speed;
-    const pitchDelta = dy * speed;
+    const rect = this.canvas.getBoundingClientRect();
+    const fovRad = (this.fov * Math.PI) / 180;
+    // Ajuste inspirado no método Drag do Marzipano: converte deslocamento em pixels
+    // proporcionalmente ao campo de visão atual, garantindo a mesma sensação de órbita.
+    const yawDelta = (dx / Math.max(rect.width, 1)) * fovRad;
+    const pitchDelta = (dy / Math.max(rect.height, 1)) * fovRad;
     this.yaw = wrapAngle(this.yaw - yawDelta);
     this.pitch = clamp(this.pitch + pitchDelta, -Math.PI / 2 + 0.01, Math.PI / 2 - 0.01);
     this.velocityYaw = -yawDelta;

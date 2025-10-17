@@ -49,12 +49,11 @@
       <section id="workspace-section" style="display: none;">
         <h2>Mapa e tour 360º integrados</h2>
         <p>
-          Escolha um panorama na faixa abaixo, posicione-o na planta e clique na imagem 360º para adicionar hotspots — tudo no mesmo ambiente.
+          Escolha um panorama na lista ao lado, posicione-o na planta e clique na imagem 360º para adicionar hotspots — tudo no mesmo ambiente.
         </p>
         <div class="workspace-grid">
           <div class="card workspace-main">
             <div class="workspace-toolbar">
-              <div class="panorama-strip" id="panorama-strip"></div>
               <div class="mode-toggle" role="group" aria-label="Modo de interação">
                 <button type="button" class="mode-button is-active" data-mode="view">Navegar</button>
                 <button type="button" class="mode-button" data-mode="hotspot">Adicionar hotspot</button>
@@ -64,12 +63,18 @@
             <p class="muted" id="workspace-hint">Escolha “Adicionar hotspot” para inserir um novo ponto de navegação.</p>
             <div class="workspace-hotspots" id="workspace-hotspot-list"></div>
           </div>
-          <div class="card workspace-side">
-            <h3>Planta baixa</h3>
-            <div class="visual-canvas" id="workspace-floor-plan">
-              <img id="floor-plan-preview" alt="Pré-visualização da planta" />
+          <div class="workspace-side">
+            <div class="card workspace-panel">
+              <h3>Vistas cadastradas</h3>
+              <div class="list" id="workspace-panorama-list"></div>
             </div>
-            <p class="muted">Clique na planta para posicionar o panorama ativo.</p>
+            <div class="card workspace-panel">
+              <h3>Planta baixa</h3>
+              <div class="visual-canvas" id="workspace-floor-plan">
+                <img id="floor-plan-preview" alt="Pré-visualização da planta" />
+              </div>
+              <p class="muted">Clique na planta para posicionar o panorama ativo.</p>
+            </div>
           </div>
         </div>
       </section>
