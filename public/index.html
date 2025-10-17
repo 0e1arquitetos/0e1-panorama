@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZERO E UM | Estúdio de Passeios Virtuais</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Exo:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <div class="brand">0E1 arquitetos</div>
+      <div class="project-highlight" id="header-project">Studio Panorama</div>
+    </header>
+    <main>
+      <section>
+        <h1>Novo projeto de passeio virtual</h1>
+        <p class="notice">
+          Faça upload da planta baixa (PNG) e das imagens panorâmicas renderizadas. Em seguida, defina os pontos de navegação na planta
+          e configure os hotspots entre as imagens para construir o tour interativo.
+        </p>
+        <div class="flex">
+          <div class="card" style="flex: 1 1 320px;">
+            <label for="project-name">Nome do projeto</label>
+            <input type="text" id="project-name" placeholder="Residência Horizonte" />
+
+            <label for="project-description" style="margin-top: 16px;">Descrição (opcional)</label>
+            <textarea id="project-description" placeholder="Breve resumo para o cliente"></textarea>
+
+            <label for="floor-plan" style="margin-top: 16px;">Planta baixa (PNG)</label>
+            <input type="file" id="floor-plan" accept="image/png,image/jpeg" />
+
+            <label for="panorama-files" style="margin-top: 16px;">Panoramas 360º</label>
+            <input type="file" id="panorama-files" accept="image/*" multiple />
+
+            <div class="links" id="panorama-list"></div>
+
+            <button id="start-config" style="margin-top: 24px;">Configurar passeios</button>
+          </div>
+
+          <div class="card" style="flex: 1 1 360px;">
+            <h2>Projetos existentes</h2>
+            <div class="list" id="project-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="floor-plan-section" style="display: none;">
+        <h2>1. Posicione as câmeras na planta</h2>
+        <p>
+          Escolha um panorama na lista, confira a visão 360º no preview ao lado e clique na planta para registrar a posição da câmera.
+        </p>
+        <div class="flex">
+          <div class="card" style="flex: 2 1 520px;">
+            <div class="visual-canvas" id="floor-plan-canvas">
+              <img id="floor-plan-preview" alt="Pré-visualização da planta" />
+            </div>
+          </div>
+          <div class="card" style="flex: 1 1 320px; display: flex; flex-direction: column; gap: 16px;">
+            <div>
+              <label for="active-panorama">Panorama ativo</label>
+              <select id="active-panorama"></select>
+            </div>
+            <div>
+              <div class="viewer-360" id="placement-viewer"></div>
+              <small class="muted">Arraste para visualizar o panorama selecionado em 360º.</small>
+            </div>
+            <div class="list" id="marker-summary"></div>
+            <button id="go-hotspots" disabled>Pré-visualizar tour 360º</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="hotspot-section" style="display: none;">
+        <h2>2. Pré-visualize o tour e crie hotspots</h2>
+        <p>Selecione uma imagem, navegue no panorama 360º e clique na área desejada para criar um hotspot que leve a outro ponto.</p>
+        <div class="flex">
+          <div class="card" style="flex: 2 1 520px;">
+            <div class="viewer-360" id="hotspot-viewer"></div>
+          </div>
+          <div class="card" style="flex: 1 1 320px;">
+            <label for="hotspot-panorama">Panorama em edição</label>
+            <select id="hotspot-panorama"></select>
+            <p class="muted" style="margin-top: 8px;">Os hotspots aparecem na lista abaixo. Atualize o destino ou remova se necessário.</p>
+            <div class="list" id="hotspot-summary" style="margin-top: 16px;"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="publish-section" style="display: none;">
+        <h2>3. Publicar tour</h2>
+        <p>Revise os dados e publique para gerar os links compartilháveis.</p>
+        <div id="project-review" class="card"></div>
+        <button id="publish-project" style="margin-top: 24px;">Publicar projeto</button>
+      </section>
+    </main>
+    <footer>ZERO E UM arquitetos • Experiências imersivas para arquitetura</footer>
+  </body>
+</html>
