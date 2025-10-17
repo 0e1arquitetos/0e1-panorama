@@ -432,10 +432,12 @@ export class PanoramaViewer {
     this.lastPointer = { x: event.clientX, y: event.clientY };
 
     const speed = this.options.rotateSpeed;
-    this.yaw = wrapAngle(this.yaw + dx * speed);
-    this.pitch = clamp(this.pitch - dy * speed, -Math.PI / 2 + 0.01, Math.PI / 2 - 0.01);
-    this.velocityYaw = dx * speed;
-    this.velocityPitch = -dy * speed;
+    const yawDelta = dx * speed;
+    const pitchDelta = dy * speed;
+    this.yaw = wrapAngle(this.yaw - yawDelta);
+    this.pitch = clamp(this.pitch + pitchDelta, -Math.PI / 2 + 0.01, Math.PI / 2 - 0.01);
+    this.velocityYaw = -yawDelta;
+    this.velocityPitch = pitchDelta;
   }
 
   onPointerUp(event) {

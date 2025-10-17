@@ -25,7 +25,6 @@ const selectors = {
   workspaceViewer: document.getElementById('workspace-viewer'),
   workspaceHint: document.getElementById('workspace-hint'),
   modeButtons: document.querySelectorAll('[data-mode]'),
-  markerSummary: document.getElementById('marker-summary'),
   hotspotList: document.getElementById('workspace-hotspot-list'),
   publishSection: document.getElementById('publish-section'),
   publishReview: document.getElementById('project-review'),
@@ -380,26 +379,6 @@ function renderMarkers() {
     });
     selectors.floorPlanCanvas.appendChild(marker);
   });
-
-  selectors.markerSummary.innerHTML = '';
-  if (!state.panoramas.length) {
-    const empty = document.createElement('p');
-    empty.className = 'muted';
-    empty.textContent = 'Sem panoramas carregados ainda.';
-    selectors.markerSummary.appendChild(empty);
-  } else {
-    state.panoramas.forEach((panorama, index) => {
-      const summaryItem = document.createElement('div');
-      summaryItem.className = 'summary-item';
-      const hasPosition = Boolean(panorama.floorPosition);
-      summaryItem.innerHTML = `
-        <span class="summary-index">${index + 1}</span>
-        <span class="summary-name">${panorama.name || panorama.filename}</span>
-        <span class="summary-status ${hasPosition ? 'is-ready' : 'is-pending'}">${hasPosition ? 'Posicionado' : 'Pendente'}</span>
-      `;
-      selectors.markerSummary.appendChild(summaryItem);
-    });
-  }
 
   updateWorkflowVisibility();
 }

@@ -390,57 +390,6 @@ button:disabled {
   min-width: 180px;
 }
 
-.workspace-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.summary-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(36, 54, 190, 0.08);
-}
-
-.summary-index {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(36, 54, 190, 0.9);
-  color: white;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-}
-
-.summary-name {
-  flex: 1;
-  min-width: 0;
-}
-
-.summary-status {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(36, 54, 190, 0.16);
-  color: var(--brand-indigo);
-}
-
-.summary-status.is-ready {
-  background: rgba(0, 255, 203, 0.25);
-  color: var(--brand-teal);
-}
-
-.summary-status.is-pending {
-  background: rgba(253, 137, 255, 0.25);
-  color: var(--brand-indigo);
-}
-
 .card {
   background: rgba(220, 224, 255, 0.45);
   border-radius: 16px;
